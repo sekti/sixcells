@@ -34,7 +34,7 @@ except ImportError:
 from qt import Signal
 from qt.core import QRectF, QTimer, QMargins, QByteArray
 from qt.gui import QPolygonF, QPen, QPainter, QTransform, QKeySequence, QBrush
-from qt.widgets import QApplication, QGraphicsView, QMainWindow, QFileDialog, QShortcut, QAction, QVBoxLayout, QLabel, QWidget
+from qt.widgets import QApplication, QGraphicsView, QMainWindow, QFileDialog, QShortcut, QAction, QVBoxLayout, QLabel, QWidget, QHBoxLayout
 
 
 class Cell(common.Cell):
@@ -43,6 +43,7 @@ class Cell(common.Cell):
         
         self.value = None
         self.flower = False
+        self.hidden = False
 
     def upd(self, first=True):
         try:
@@ -58,12 +59,17 @@ class Cell(common.Cell):
 
 
     def mousePressEvent(self, e):
-        if e.button()==qt.LeftButton and self.kind is Cell.full and self.value is not None:
-            self.flower = not self.flower
-            return
         if e.button()==qt.RightButton and self.scene().playtest and self.kind is not Cell.unknown:
             self.kind = Cell.unknown
             return
+        if self.kind is Cell.full and self.value is not None:
+            if e.button()==qt.LeftButton:
+                self.flower = not self.flower
+                return
+            if e.button()==qt.RightButton:
+                self.hidden = not self.hidden
+                self.flower = False
+                return
         buttons = [qt.LeftButton, qt.RightButton]
         if self.scene().swap_buttons:
             buttons.reverse()
@@ -102,6 +108,15 @@ class Cell(common.Cell):
     def flower(self):
         if self.scene():
             self.scene().update()
+    
+    @property
+    def hidden(self):
+        return self._text.opacity()<1
+    @hidden.setter
+    def hidden(self, value):
+        self._text.setOpacity(0.2 if value else 1)
+        self.update()
+
 
 
 class Column(common.Column):
@@ -329,6 +344,24 @@ class MainWindow(QMainWindow):
         layout.setSpacing(0)
         self.central_widget.setLayout(layout)
         
+        top_layout = QHBoxLayout()
+        layout.addLayout(top_layout)
+        
+        self.author_align_label = QLabel()
+        self.author_align_label.setStyleSheet('color: rgba(0,0,0,0%)')
+        top_layout.addWidget(self.author_align_label, 0)
+        
+        self.title_label = QLabel()
+        self.title_label.setAlignment(qt.AlignHCenter)
+        font = self.title_label.font()
+        multiply_font_size(font, 1.8)
+        self.title_label.setFont(font)
+        top_layout.addWidget(self.title_label, 1)
+
+        self.author_label = QLabel()
+        top_layout.addWidget(self.author_label, 0)
+        
+        
         self.view = View(self.scene)
         layout.addWidget(self.view, 1)
 
@@ -360,10 +393,7 @@ class MainWindow(QMainWindow):
         
         menu = self.menuBar().addMenu("&Preferences")
         
-        self.swap_buttons_action = action = QAction("Swap Buttons", self)
-        action.setCheckable(True)
-        def set_swap_buttons(v): self.scene.swap_buttons = v
-        action.toggled.connect(set_swap_buttons)
+        self.swap_buttons_action = action = make_check_action("Swap Buttons", self, self.scene, 'swap_buttons')
         menu.addAction(action)
 
         
@@ -402,7 +432,7 @@ class MainWindow(QMainWindow):
     
     config_format = '''
         swap_buttons = swap_buttons_action.isChecked(); swap_buttons_action.setChecked(v)
-        last_used_folder = last_used_folder; last_used_folder = v
+        last_used_folder
         window_geometry_qt = save_geometry_qt(); restore_geometry_qt(v)
     '''
     def save_geometry_qt(self):
@@ -452,11 +482,18 @@ class MainWindow(QMainWindow):
                 it.kind = Cell.unknown
         self.scene.remaining = remaining
         self.scene.mistakes = 0
-        if self.scene.information:
-            self.information_label.setText(self.scene.information)
-            self.information_label.show()
-        else:
-            self.information_label.hide()
+        for txt, it in [
+            (self.scene.title, self.title_label),
+            (("by {}" if self.scene.author else "").format(self.scene.author), self.author_label),
+            (("by {}" if self.scene.author else "").format(self.scene.author), self.author_align_label),
+            (self.scene.information, self.information_label),
+        ]:
+            if txt and not self.playtest:
+                it.setText(txt)
+                it.show()
+            else:
+                it.hide()
+
 
     def closeEvent(self, e):
         self.scene.solving = False
@@ -478,6 +515,7 @@ def main(f=None):
     if not f and len(sys.argv[1:])==1:
         f = sys.argv[1]
     if f:
+        f = os.path.abspath(f)
         QTimer.singleShot(0, lambda: window.load_file(f))
 
     app.exec_()

@@ -31,7 +31,7 @@ from common import *
 
 from qt.core import QPointF, QRectF, QSizeF, QTimer, QByteArray
 from qt.gui import QPolygonF, QPen, QPainter, QMouseEvent, QTransform, QPainterPath, QKeySequence
-from qt.widgets import QApplication, QGraphicsView, QMainWindow, QMessageBox, QFileDialog, QGraphicsItem, QGraphicsPathItem, QInputDialog
+from qt.widgets import QApplication, QGraphicsView, QMainWindow, QMessageBox, QFileDialog, QGraphicsItem, QGraphicsPathItem, QInputDialog, QAction, QActionGroup, QVBoxLayout, QDialog, QLineEdit, QDialogButtonBox, QLabel
 
 
 
@@ -212,14 +212,14 @@ class Cell(common.Cell):
                 self.preview.setX(self.x()+cos30)
                 self.preview.setY(self.y()-0.5)
                 self.preview.setRotation(60)
-            elif -120<a<-90:
-                self.preview.setX(self.x()-cos30*1.3)
-                self.preview.setY(self.y())
-                self.preview.setRotation(-90+1e-3)
-            elif 90<a<120:
-                self.preview.setX(self.x()+cos30*1.3)
-                self.preview.setY(self.y())
-                self.preview.setRotation(90-1e-3)
+            #elif -120<a<-90:
+                #self.preview.setX(self.x()-cos30*1.3)
+                #self.preview.setY(self.y())
+                #self.preview.setRotation(-90+1e-3)
+            #elif 90<a<120:
+                #self.preview.setX(self.x()+cos30*1.3)
+                #self.preview.setY(self.y())
+                #self.preview.setRotation(90-1e-3)
             else:
                 self.scene().removeItem(self.preview)
                 self.preview = None
@@ -238,8 +238,8 @@ class Cell(common.Cell):
                 if e.button()==qt.LeftButton:
                     try:
                         self.show_info = (self.show_info+1)%3
-                        if self.show_info==2 and self.value<=1:
-                            self.show_info = (self.show_info+1)%3
+                        #if self.show_info==2 and self.value<=1:
+                            #self.show_info = (self.show_info+1)%3
                     except TypeError:
                         pass
                 elif e.button()==qt.RightButton:
@@ -336,24 +336,35 @@ def convert_pos(x, y):
 class Scene(common.Scene):
     def __init__(self):
         common.Scene.__init__(self)
+        self.reset()
+        self.swap_buttons = False
+        self.use_rightclick = False
+    
+    def reset(self):
+        self.clear()
         self.preview = None
         self.selection = set()
         self.selection_path_item = None
+        self.supress = False
+        self.title = self.author = self.information = None
     
-    def place(self, p):
+    def place(self, p, kind=Cell.unknown):
         if not self.preview:
             self.preview = Cell()
-            self.preview.kind = Cell.unknown
+            self.preview.kind = kind
             self.preview.setOpacity(0.4)
             self.addItem(self.preview)
         x, y = convert_pos(p.x(), p.y())
         self.preview.setPos(x, y)
-        self.preview.upd()
-
+        self.preview.upd(False)
+        self.preview.text = ''
+        
     
     def mousePressEvent(self, e):
         if self.supress:
             return
+
+        self.last_press = self.itemAt(e.scenePos(), QTransform())
 
         if self.selection:
             if (e.button()==qt.LeftButton and not self.itemAt(e.scenePos(), QTransform())) or e.button()==qt.RightButton:
@@ -364,8 +375,8 @@ class Scene(common.Scene):
                         it.selected = False
                     except AttributeError:
                         pass
-        if e.button()==qt.LeftButton:
-            if not self.itemAt(e.scenePos(), QTransform()):
+        if not self.itemAt(e.scenePos(), QTransform()):
+            if e.button()==qt.LeftButton:
                 if e.modifiers()&qt.ShiftModifier:
                     self.selection_path_item = QGraphicsPathItem()
                     self.selection_path = path = QPainterPath()
@@ -373,9 +384,9 @@ class Scene(common.Scene):
                     path.moveTo(e.scenePos())
                     self.selection_path_item.setPath(path)
                     self.addItem(self.selection_path_item)
-                else:
-                    self.place(e.scenePos())
-                return
+            if e.button()==qt.LeftButton or (self.use_rightclick and e.button()==qt.RightButton):
+                if not e.modifiers()&qt.ShiftModifier:
+                    self.place(e.scenePos(), Cell.full if (e.button()==qt.LeftButton)^self.swap_buttons else Cell.empty)
         
         QGraphicsScene.mousePressEvent(self, e)
 
@@ -413,19 +424,23 @@ class Scene(common.Scene):
                 if isinstance(it, Column) and distance(it, self.preview)<1e-3:
                     col = it
                     continue
-                if isinstance(it, Cell) and self.preview.overlaps(it, allow_horz=e.modifiers()&qt.AltModifier):
+                if self.preview.overlaps(it, allow_horz=e.modifiers()&qt.AltModifier):
                     with self.preview.upd_neighbors():
                         self.removeItem(self.preview)
                     self.preview = None
                     break
             else:
                 self.preview.setOpacity(1)
-                self.preview.kind = Cell.empty
-                self.preview.show_info = 1
+                self.preview.show_info = self.preview.kind==Cell.empty
                 if col:
-                    old_cell = col.cell
-                    col.cell = self.preview
-                    col.setPos(col.pos()-old_cell.pos()+self.preview.pos())
+                    if not self.itemAt(col.pos()-col.cell.pos()+self.preview.pos()):
+                        old_cell = col.cell
+                        col.cell = self.preview
+                        col.setPos(col.pos()-old_cell.pos()+self.preview.pos())
+                        col.upd()
+                    else:
+                        with self.preview.upd_neighbors():
+                            self.removeItem(self.preview)
             self.preview = None
         else:
             QGraphicsScene.mouseReleaseEvent(self, e)
@@ -433,19 +448,19 @@ class Scene(common.Scene):
     def mouseDoubleClickEvent(self, e):
         it = self.itemAt(e.scenePos(), QTransform())
         if not it:
+            self.mousePressEvent(e)
             return
-        if isinstance(it, Cell):
-            pass
-        elif isinstance(it.parentItem(), Cell):
-            it = it.parentItem()
-        else:
+        if not isinstance(it, Cell):
             return
-        if it.kind is Cell.full:
-            it.kind = Cell.empty
-            it.show_info = 1
-        else:
-            it.kind = Cell.full
-            it.show_info = 0
+        if self.last_press is None and not self.use_rightclick:
+            if it.kind is Cell.full:
+                it.kind = Cell.empty
+                it.show_info = 1
+            else:
+                it.kind = Cell.full
+                it.show_info = 0
+        QGraphicsScene.mouseDoubleClickEvent(self, e)
+
 
 
 
@@ -453,7 +468,6 @@ class View(QGraphicsView):
     def __init__(self, scene):
         QGraphicsView.__init__(self, scene)
         self.scene = scene
-        self.scene.supress = False
         self.setResizeAnchor(QGraphicsView.AnchorViewCenter)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setRenderHints(self.renderHints()|QPainter.Antialiasing)
@@ -465,7 +479,7 @@ class View(QGraphicsView):
 
 
     def mousePressEvent(self, e):
-        if e.button()==qt.MidButton or (e.button()==qt.RightButton and not self.scene.itemAt(self.mapToScene(e.pos()), QTransform())):
+        if e.button()==qt.MidButton or (e.button()==qt.RightButton and not self.scene.use_rightclick and not self.scene.itemAt(self.mapToScene(e.pos()), QTransform())):
             fake = QMouseEvent(e.type(), e.pos(), qt.LeftButton, qt.LeftButton, e.modifiers())
             self.scene.supress = True
             self.setDragMode(QGraphicsView.ScrollHandDrag)
@@ -520,23 +534,50 @@ class MainWindow(QMainWindow):
         menu.addAction("Save", lambda: self.save_file(self.current_file), QKeySequence.Save)
         menu.addAction("Save As...", self.save_file, QKeySequence('Ctrl+Shift+S'))
         menu.addSeparator()
-        menu.addAction("Set Text Hints", self.set_information, QKeySequence('Ctrl+D'))
+        menu.addAction("Set Level Information", self.set_information, QKeySequence('Ctrl+D'))
         menu.addSeparator()
         menu.addAction("Quit", self.close, QKeySequence.Quit)
+
+        menu = self.menuBar().addMenu("Preference&s")
+        
+        group = QActionGroup(self)
+        group.setExclusive(True)
+        action = make_check_action("Left Click Places Blue", self)
+        group.addAction(action)
+        action.setChecked(True)
+        menu.addAction(action)
+        self.swap_buttons_action = action = make_check_action("Left Click Places Black", self, self.scene, 'swap_buttons')
+        menu.addAction(action)
+        group.addAction(action)
+        menu.addSeparator()
+        group = QActionGroup(self)
+        self.secondary_rightclick_action = action = make_check_action("Right Click Places Secondary", self, self.scene, 'use_rightclick')
+        group.setExclusive(True)
+        group.addAction(action)
+        action.setChecked(True)
+        menu.addAction(action)
+        self.secondary_doubleclick_action = action = make_check_action("Double Click Places Secondary", self)
+        menu.addAction(action)
+        group.addAction(action)
+        
 
         menu = self.menuBar().addMenu("&Play")
         menu.addAction("From Start", self.play, QKeySequence('Ctrl+Tab'))
         menu.addAction("Resume", lambda: self.play(resume=True), QKeySequence('Tab'))
         
+        
         menu = self.menuBar().addMenu("&Help")
         menu.addAction("Instructions", help, QKeySequence.HelpContents)
         menu.addAction("About", lambda: about(self.title))
         
+
         self.current_file = None
         self.any_changes = False
         self.scene.changed.connect(self.changed)
 
         self.last_used_folder = None
+        self.swap_buttons = False
+        self.default_author = None
         
         try:
             with open('editor.cfg') as cfg_file:
@@ -547,13 +588,17 @@ class MainWindow(QMainWindow):
             load_config(self, self.config_format, cfg)
     
     config_format = '''
-        last_used_folder = last_used_folder; last_used_folder = v
+        swap_buttons = swap_buttons_action.isChecked(); swap_buttons_action.setChecked(v)
+        secondary_cell_action = 'double' if secondary_doubleclick_action.isChecked() else 'right'; secondary_doubleclick_action.setChecked(v=='double')
+        default_author
+        last_used_folder
         window_geometry_qt = save_geometry_qt(); restore_geometry_qt(v)
     '''
     def save_geometry_qt(self):
         return str(self.saveGeometry().toBase64().data().decode('ascii'))
     def restore_geometry_qt(self, value):
         self.restoreGeometry(QByteArray.fromBase64(value.encode('ascii')))
+    
     
     def changed(self, rects=None):
         if rects is None or any((rect.width() or rect.height()) for rect in rects):
@@ -589,38 +634,69 @@ class MainWindow(QMainWindow):
                 result = True
         if result:
             self.current_file = None
-            self.scene.clear()
+            self.scene.reset()
             self.no_changes()
         return result
 
     
     def set_information(self, desc=None):
-        text, ok = QInputDialog.getText(self, "Text Hints",
-            "This text will be displayed within the level:", text=self.scene.information or ''
-        )
-        if ok:
-            self.scene.information = text or None
+        dialog = QDialog()
+        dialog.setWindowTitle("Level Information")
+        layout = QVBoxLayout()
+        dialog.setLayout(layout)
+        
+        layout.addWidget(QLabel("Level title:"))
+        title_field = QLineEdit(self.scene.title or '')
+        layout.addWidget(title_field)
+        
+        layout.addWidget(QLabel("Author name:"))
+        author_field = QLineEdit(self.scene.author or self.default_author or '')
+        layout.addWidget(author_field)
+        old_author = author_field.text()
+        
+        information = (self.scene.information or '').splitlines()
+        layout.addWidget(QLabel("Custom text hints:"))
+        layout.addWidget(QLabel("This text will be displayed within the level"))
+        information1_field = QLineEdit(information[0] if information else '')
+        layout.addWidget(information1_field)
+        information2_field = QLineEdit(information[1] if len(information)>1 else '')
+        layout.addWidget(information2_field)
+        
+        def accepted():
+            self.scene.title = title_field.text().strip() or None
+            self.scene.author = author_field.text().strip() or None
+            if self.scene.author and self.scene.author!=old_author:
+                self.default_author = self.scene.author
+            self.scene.information = '\n'.join(line for line in [information1_field.text().strip(), information2_field.text().strip()] if line)
             self.changed()
+            dialog.close()
+        
+        button_box = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
+        button_box.rejected.connect(dialog.close)
+        button_box.accepted.connect(accepted)
+        layout.addWidget(button_box)
+        
+        dialog.exec()
+        
     
     
     def save_file(self, fn=None):
-        filt = ''
         if not fn:
             try:
                 dialog = QFileDialog.getSaveFileNameAndFilter
             except AttributeError:
                 dialog = QFileDialog.getSaveFileName
-            fn, filt = dialog(self, "Save", self.last_used_folder,
-                "SixCells level (JSON) (*.sixcells);;SixCells level (JSON, gzipped) (*.sixcellz)"
+            fn, _ = dialog(self, "Save", self.last_used_folder,
+                "Hexcells level (*.hexcells);;SixCells format (JSON) (*.sixcells);;SixCells format (JSON, gzipped) (*.sixcellz)"
             )
-            #;;HexCells level (EXPORT ONLY) (*.hexcells)
         if not fn:
             return
-        if 'hexcells' in filt:
+        if fn.endswith('.hexcells'):
             try:
                 return save_hexcells(fn, self.scene)
             except ValueError as e:
                 QMessageBox.warning(None, "Error", str(e))
+                return
         try:
             gz = fn.endswith('.sixcellz')
         except AttributeError:
@@ -638,11 +714,17 @@ class MainWindow(QMainWindow):
                 dialog = QFileDialog.getOpenFileNameAndFilter
             except AttributeError:
                 dialog = QFileDialog.getOpenFileName
-            fn, _ = dialog(self, "Open", self.last_used_folder, "SixCells level (JSON) (*.sixcells *.sixcellz)")
+            fn, _ = dialog(self, "Open", self.last_used_folder, "Hexcells level (*.hexcells);;SixCells format (JSON) (*.sixcells *.sixcellz)")
         if not fn:
             return
-        self.scene.clear()
-        load_file(fn, self.scene, gz=fn.endswith('.sixcellz'), Cell=Cell, Column=Column)
+        if fn.endswith('.hexcells'):
+            try:
+                load_hexcells(fn, self.scene, Cell=Cell, Column=Column)
+            except ValueError as e:
+                QMessageBox.warning(None, "Error", str(e))
+                return
+        else:
+            load_file(fn, self.scene, gz=fn.endswith('.sixcellz'), Cell=Cell, Column=Column)
         for it in self.scene.all(Column):
             it.cell = min(it.members, key=lambda m: (m.pos()-it.pos()).manhattanLength())
         self.view.fitInView(self.scene.itemsBoundingRect().adjusted(-0.5, -0.5, 0.5, 0.5), qt.KeepAspectRatio)
@@ -700,6 +782,7 @@ def main(f=None):
     if not f and len(sys.argv[1:])==1:
         f = sys.argv[1]
     if f:
+        f = os.path.abspath(f)
         QTimer.singleShot(50, lambda: window.load_file(f))
     
     app.exec_()
