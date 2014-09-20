@@ -344,7 +344,7 @@ class MainWindow(QMainWindow):
         self.scene.playtest = self.playtest = playtest
         
         
-        menu = self.menuBar().addMenu("File")
+        menu = self.menuBar().addMenu("&File")
         
         if not playtest:
             action = menu.addAction("Open...", self.load_file, QKeySequence.Open)
@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
             QShortcut(QKeySequence.Close, self, action.trigger)
         
         
-        menu = self.menuBar().addMenu("Preferences")
+        menu = self.menuBar().addMenu("&Preferences")
         
         self.swap_buttons_action = action = QAction("Swap Buttons", self)
         action.setCheckable(True)
@@ -367,7 +367,7 @@ class MainWindow(QMainWindow):
         menu.addAction(action)
 
         
-        menu = self.menuBar().addMenu("Solve")
+        menu = self.menuBar().addMenu("&Solve")
         menu.setEnabled(solve is not None)
         
         menu.addAction("One Step", self.scene.solve_step, QKeySequence("S"))
@@ -381,7 +381,7 @@ class MainWindow(QMainWindow):
         menu.addAction("Solve Completely", self.scene.solve_complete)
 
         
-        menu = self.menuBar().addMenu("Help")
+        menu = self.menuBar().addMenu("&Help")
         
         action = menu.addAction("Instructions", help, QKeySequence.HelpContents)
         

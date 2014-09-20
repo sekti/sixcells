@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
         self.view = View(self.scene)
         self.setCentralWidget(self.view)
         
-        menu = self.menuBar().addMenu("File")
+        menu = self.menuBar().addMenu("&File")
         menu.addAction("New", self.close_file, QKeySequence.New)
         menu.addAction("Open...", self.load_file, QKeySequence.Open)
         menu.addAction("Save", lambda: self.save_file(self.current_file), QKeySequence.Save)
@@ -524,11 +524,11 @@ class MainWindow(QMainWindow):
         menu.addSeparator()
         menu.addAction("Quit", self.close, QKeySequence.Quit)
 
-        menu = self.menuBar().addMenu("Play")
+        menu = self.menuBar().addMenu("&Play")
         menu.addAction("From Start", self.play, QKeySequence('Ctrl+Tab'))
         menu.addAction("Resume", lambda: self.play(resume=True), QKeySequence('Tab'))
         
-        menu = self.menuBar().addMenu("Help")
+        menu = self.menuBar().addMenu("&Help")
         menu.addAction("Instructions", help, QKeySequence.HelpContents)
         menu.addAction("About", lambda: about(self.title))
         
