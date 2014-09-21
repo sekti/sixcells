@@ -18,7 +18,7 @@
 
 from __future__ import division, print_function
 
-__version__ = '1.0-alpha.3'
+__version__ = '1.0-alpha.4'
 
 import sys
 import os.path
@@ -41,7 +41,7 @@ import qt
 qt.init()
 from qt.core import QPointF, QUrl
 from qt.gui import QPolygonF, QPen, QColor, QDesktopServices
-from qt.widgets import QGraphicsPolygonItem, QGraphicsSimpleTextItem, QMessageBox, QGraphicsScene, QAction
+from qt.widgets import QGraphicsPolygonItem, QGraphicsSimpleTextItem, QMessageBox, QGraphicsScene, QAction, QActionGroup
 
 from util import *
 
@@ -97,6 +97,22 @@ def make_check_action(text, obj, *args):
             setattr(*(args+(value,)))
         action.toggled.connect(set_attribute)
     return action
+
+def make_action_group(parent, menu, obj, attribute, items):
+    group = QActionGroup(parent)
+    group.setExclusive(True)
+    result = collections.OrderedDict()
+    for text, value in items:
+        action = make_check_action(text, parent)
+        group.addAction(action)
+        menu.addAction(action)
+        def set_attribute(truth, value=value):
+            if truth:
+                setattr(obj, attribute, value)
+        action.toggled.connect(set_attribute)
+        result[value] = action
+    return result
+
 
 class Cell(QGraphicsPolygonItem):
     "Hexagonal cell"
@@ -385,14 +401,14 @@ def save_hexcells(file, scene):
     for it in scene.all():
         if isinstance(it, (Cell, Column)):
             grid[hexcells_pos(it.x(), it.y())] = it
-    min_x, max_x = minmax([x for x, y in grid])
-    min_y, max_y = minmax([y for x, y in grid])
+    min_x, max_x = minmax([x for x, y in grid] or [0])
+    min_y, max_y = minmax([y for x, y in grid] or [0])
     mid_x, mid_y = (min_x+max_x)//2, (min_y+max_y)//2
     min_t, max_t = 0, 32
     mid_t = (min_t+max_t)//2
     grid = {(x-mid_x+mid_t, y-mid_y+mid_t): it for (x, y), it in grid.items()}
-    min_x, max_x = minmax([x for x, y in grid])
-    min_y, max_y = minmax([y for x, y in grid])
+    min_x, max_x = minmax([x for x, y in grid] or [0])
+    min_y, max_y = minmax([y for x, y in grid] or [0])
     if min_x<min_t or max_x>max_t:
         raise ValueError("This level is too wide to fit into Hexcells format")
     if min_y<min_t or min_y>max_t:
@@ -411,7 +427,7 @@ def save_hexcells(file, scene):
                 r[1] = '+'
         if isinstance(it, Cell) and it.revealed:
             r[0] = r[0].upper()
-    result = '\n'.join(' '.join(''.join(part) for part in line) for line in result)
+    result = '\n'.join(''.join(''.join(part) for part in line) for line in result)
     if isinstance(file, basestring):
         file = io.open(file, 'wb')
     file.write(b'Hexcells level v1'+b'\n')
@@ -419,6 +435,7 @@ def save_hexcells(file, scene):
     file.write(scene.author.encode('utf-8')+b'\n')
     file.write((b'\n' if '\n' not in scene.information else b'')+scene.information.encode('utf-8')+b'\n')
     file.write(result.encode('utf-8'))
+    return True
 
 
 def load_hexcells(file, scene, Cell=Cell, Column=Column):
@@ -436,12 +453,12 @@ def load_hexcells(file, scene, Cell=Cell, Column=Column):
     scene.information = '\n'.join(line for line in [file.readline().strip(), file.readline().strip()] if line)
     
     for y, line in enumerate(file):
-        line = line.strip()
+        line = line.strip().replace(' ', '')
         
         row = []
         
-        for x, part in enumerate(line.split()):
-            kind, value = part
+        for x in range(0, len(line)//2):
+            kind, value = line[x*2:x*2+2]
             
             if kind.lower() in 'ox':
                 item = Cell()
