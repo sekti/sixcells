@@ -1,16 +1,24 @@
 # SixCells
 
-[editor](#usage)
-
 Level editor for [Hexcells](http://store.steampowered.com/sub/50074/).
 
 ![Logo](https://raw.githubusercontent.com/BlaXpirit/sixcells/master/resources/logo.png)
 
+### Content
+
+- [How to Use](#usage)
+  - [Editor](#editor)
+  - [Player](#player)
+- [Installation](#install)
+  - [Windows](#windows)
+  - [Linux](#linux)
+  - [Mac](#mac)
+- [Technical Details](#tech)
+- [Level File Structure](#levelFile)
+
 ## <a name="usage"></a> How to Use
 
 ### <a name="editor"></a> Editor
-
-#### Creating and Deleting Cells and Column Numbers
 
 Action | Button
 -------| -----------
@@ -20,14 +28,14 @@ create column number | left-click on cell and drag outwards
 delete cell/colum number | right-click
 ignore collision | hold alt while placing cell (not recommended)
 
-#### Modifying Cells and Column Numbers
+**Modifying Cells and Column Numbers**
 
 Action | Button
 -------| -----------
 cycle through information display | left-click on cell/column number
 mark/unmark cell as revealed | alt + left-click on cell
 
-#### Drag and Drop
+**Drag and Drop**
 
 Action | Button
 -------| -----------
@@ -36,37 +44,37 @@ select/deselect a cell | shift + left-click on cell
 deselect all | shfit + left-click on empty space
 drag and drop selected | left-click and drag
 
-#### Navigation
+**Navigation**
 
 Action | Button
 ------ | -------
 pan the view | press and drag mouse-wheel
 zoom in/out | mouse wheel up/down
 
-#### Play Test Mode
+**Play Test Mode**
 
 Action | Button
 ------ | -------
 toggle playtest mode | Tab
 toggle playtest mode and start new game | Ctrl + Tab
 
-### Player
+### <a name="player"></a> Player
 
-*Open* a level created in the *Editor* and play it.
+*Open* a level or paste one from the clipboard and play it.
 
-Full auto-solving capabilities are present.  
+Full auto-solving capabilities are present.
 
 If you use the *Player* to playtest right from *Editor*, it will save state between sessions.  
 Right click to revert a cell to yellow.  
 
 
-## Installation
+## <a name="install"></a> Installation
 
-### **Windows**
+### <a name="windows"></a> **Windows**
 
 Download the latest [release](https://github.com/BlaXpirit/sixcells/releases), extract the folder and you're ready to go!
 
-### **Linux**
+### <a name="linux"></a> **Linux**
 
 Install `git`, `python-pyside` or `python-pyqt4`, `python-pulp` (`pip install pulp`), optionally `glpk`:
 
@@ -99,12 +107,12 @@ git clone --recursive https://github.com/BlaXpirit/sixcells
 
 Now you can start `editor.py` and `player.py` by opening them in a file explorer or from command line.
 
-### **Mac**
+### <a name="mac"></a> **Mac**
   
 *SixCells* should work under Mac if the needed libraries are available. Try to adapt the instructions for Linux.
 
   
-## Technical Details
+## <a name="tech"></a> Technical Details
 
 *SixCells* is written using [Python](http://python.org/) and [Qt](http://qt-project.org/).  
 [PuLP](https://pypi.python.org/pypi/PuLP) is used for solving.  
@@ -116,7 +124,7 @@ It is guaranteed to work on Python 3.3 and later; Versions 2.7 and 3.* should al
 License: GNU General Public License Version 3.0 (GPLv3)
 
 
-## Level File Structure
+## <a name="levelFile"></a> Level File Structure
 
 ### *.hexcells format
 
