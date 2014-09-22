@@ -20,6 +20,8 @@ Level editor for [Hexcells](http://store.steampowered.com/sub/50074/).
 
 ### <a name="editor"></a> Editor
 
+##### Creating and Deleting Cells and Column Numbers
+
 Action | Button
 -------| -----------
 create blue cell | left-click
@@ -28,14 +30,14 @@ create column number | left-click on cell and drag outwards
 delete cell/colum number | right-click
 ignore collision | hold alt while placing cell (not recommended)
 
-**Modifying Cells and Column Numbers**
+##### Modifying Cells and Column Numbers
 
 Action | Button
 -------| -----------
 cycle through information display | left-click on cell/column number
 mark/unmark cell as revealed | alt + left-click on cell
 
-**Drag and Drop**
+##### Drag and Drop
 
 Action | Button
 -------| -----------
@@ -44,14 +46,14 @@ select/deselect a cell | shift + left-click on cell
 deselect all | shfit + left-click on empty space
 drag and drop selected | left-click and drag
 
-**Navigation**
+##### Navigation
 
 Action | Button
 ------ | -------
 pan the view | press and drag mouse-wheel
 zoom in/out | mouse wheel up/down
 
-**Play Test Mode**
+##### Play Test Mode
 
 Action | Button
 ------ | -------
