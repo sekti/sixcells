@@ -7,8 +7,8 @@ Level editor for [Hexcells](http://store.steampowered.com/sub/50074/).
 ### Content
 
 - [How to Use](#usage)
-  - [Editor](#editor)
   - [Player](#player)
+  - [Editor](#editor)
 - [Installation](#install)
   - [Windows](#windows)
   - [Linux](#linux)
@@ -17,6 +17,14 @@ Level editor for [Hexcells](http://store.steampowered.com/sub/50074/).
 - [Level File Structure](#levelFile)
 
 ## <a name="usage"></a> How to Use
+
+### <a name="player"></a> Player
+
+*Open* a level or paste one from the clipboard and play it.
+
+Full auto-solving capabilities are present.
+
+Left-click/right-click an orange cell to mark it as blue/black. Right click to revert a cell to yellow.
 
 ### <a name="editor"></a> Editor
 
@@ -59,16 +67,6 @@ Action | Button
 ------ | -------
 toggle playtest mode | Tab
 toggle playtest mode and start new game | Ctrl + Tab
-
-### <a name="player"></a> Player
-
-*Open* a level or paste one from the clipboard and play it.
-
-Full auto-solving capabilities are present.
-
-If you use the *Player* to playtest right from *Editor*, it will save state between sessions.  
-Right click to revert a cell to yellow.  
-
 
 ## <a name="install"></a> Installation
 
