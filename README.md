@@ -4,6 +4,8 @@ Level editor for [Hexcells](http://store.steampowered.com/sub/50074/).
 
 ![Logo](https://raw.githubusercontent.com/BlaXpirit/sixcells/master/resources/logo.png)
 
+***
+
 ### Content
 
 - [How to Use](#usage)
@@ -15,6 +17,8 @@ Level editor for [Hexcells](http://store.steampowered.com/sub/50074/).
   - [Mac](#mac)
 - [Technical Details](#tech)
 - [Level File Structure](#levelFile)
+
+***
 
 ## <a name="usage"></a> How to Use
 
@@ -68,6 +72,8 @@ Action | Button
 toggle playtest mode | Tab
 toggle playtest mode and start new game | Ctrl + Tab
 
+***
+
 ## <a name="install"></a> Installation
 
 ### <a name="windows"></a> **Windows**
@@ -111,6 +117,7 @@ Now you can start `editor.py` and `player.py` by opening them in a file explorer
   
 *SixCells* should work under Mac if the needed libraries are available. Try to adapt the instructions for Linux.
 
+***
   
 ## <a name="tech"></a> Technical Details
 
