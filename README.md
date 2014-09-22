@@ -1,32 +1,54 @@
 # SixCells
 
+[editor](#usage)
+
 Level editor for [Hexcells](http://store.steampowered.com/sub/50074/).
 
 ![Logo](https://raw.githubusercontent.com/BlaXpirit/sixcells/master/resources/logo.png)
 
-## How to Use
+## <a name="usage"></a> How to Use
 
-### Editor
+### <a name="editor"></a> Editor
 
-Left click on empty space to add a blue cell, right click to add a black cell (configurable).
-(hold Alt to ignore collision between side-by-side cells, as seen in "FINISH" levels)  
-Left click a cell to switch between 3 information display modes.  
-Alt+click a cell to mark it as revealed.  
+#### Creating and Deleting Cells and Column Numbers
 
-Drag from inside a cell to outside the cell to add a column number marker.  
-Left click a column marker to toggle information display.  
+Action | Button
+-------| -----------
+create blue cell | left-click
+create black cell | right-click
+create column number | left-click on cell and drag outwards
+delete cell/colum number | right-click
+ignore collision | hold alt while placing cell (not recommended)
 
-Right click an item to remove it.  
+#### Modifying Cells and Column Numbers
 
-Press and drag mouse wheel to navigate.  
-Scroll to zoom.  
+Action | Button
+-------| -----------
+cycle through information display | left-click on cell/column number
+mark/unmark cell as revealed | alt + left-click on cell
 
-Shift+drag on empty space to start a freehand selection.  
-Shift+click a cell to add or remove it from current selection.  
-Shift+click on empty space to clear selection.  
-Drag one of the selected cells to relocate them.  
+#### Drag and Drop
 
-Press Tab to switch to playtest mode (open *Player*).  
+Action | Button
+-------| -----------
+freehand selection | shift + drag-left-click on empty space
+select/deselect a cell | shift + left-click on cell
+deselect all | shfit + left-click on empty space
+drag and drop selected | left-click and drag
+
+#### Navigation
+
+Action | Button
+------ | -------
+pan the view | press and drag mouse-wheel
+zoom in/out | mouse wheel up/down
+
+#### Play Test Mode
+
+Action | Button
+------ | -------
+toggle playtest mode | Tab
+toggle playtest mode and start new game | Ctrl + Tab
 
 ### Player
 
@@ -62,6 +84,8 @@ sudo pip install pulp
 sudo pacman -Sy git python-pyqt4 glpk python-pip
 pip install --user pulp
 ```
+
+<a name="usage"></a>
 
 ---
 
